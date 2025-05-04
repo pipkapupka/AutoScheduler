@@ -1,9 +1,0 @@
-# ninja log v6
-0	1008	1746191216592329510	build.ninja	f586e7f30c44f460
-1	17	1746191216602742057	CMakeFiles/ScheduleService.dir/scheduleservice.cpp.o	84bebef516bd9d08
-1	330	1746191216602087101	CMakeFiles/ScheduleService.dir/main.cpp.o	199c11604e6ccd6c
-331	445	1746191216932037681	ScheduleService	4976a42a3ec56d40
-2	1453	1746212419050914370	CMakeFiles/ScheduleService.dir/main.cpp.o	199c11604e6ccd6c
-2	7822	1746212419052045854	CMakeFiles/ScheduleService.dir/scheduleservice.cpp.o	84bebef516bd9d08
-2	7915	1746212537308119236	CMakeFiles/ScheduleService.dir/scheduleservice.cpp.o	84bebef516bd9d08
-7915	8167	1746212545221135595	ScheduleService	4976a42a3ec56d40
