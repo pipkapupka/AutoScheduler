@@ -7,7 +7,6 @@ void AuthService::setApiKey(const std::string& key) {
     apiKey = key;
 }
 
-#include <curl/curl.h>
 
 std::string AuthService::getToken(const std::string& login, const std::string& password) {
     CURL* curl = curl_easy_init();

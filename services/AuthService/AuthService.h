@@ -6,7 +6,7 @@
 class AuthService
 {
 public:
-    static std::string getToken(const std::string& login, const std::string& password); 
+    static std::string getToken(const std::string& login, const std::string& password);
     static void startServer(int port = 8081);
     static size_t writeCallback(void* contents, size_t size, size_t memb, std::string* output);
     static void setApiKey(const std::string& key);
