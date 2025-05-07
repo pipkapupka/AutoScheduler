@@ -5,12 +5,15 @@
 #include <locale>
 #include <sstream>
 
-std::string ScheduleService::apiKey = "";
+// костыли для тестирования кода, позже вынесу в параметры окружения
+std::string ScheduleService::apiKey = "ddf4e7925ac8e9ebd0229797ce21c4d8";
 
 void ScheduleService::setApiKey(const std::string& key) {
     apiKey = key;
 }
 
+// паттерн проектирования "строитель" для строительства составного объекта, а именно тела запроса к API сервису
+// далее идут вариации конкретных строителей
 ScheduleService::Builder& ScheduleService::Builder::setGroup(const std::string& group) {
     params_["group"] = group;
     return *this;
@@ -36,12 +39,14 @@ ScheduleService::Builder& ScheduleService::Builder::zoomLink(bool isDist) {
     return *this;
 }
 
+// Стандартная запись ответа от сервера в буфер переменного размера (если место в буфере заканчивается - выделяется буфер с размером в 2 раза больше)
 size_t ScheduleService::writeCallback(void* contents, size_t size, size_t memb, std::string* output) {
     size_t total_size = size * memb;
     output->append((char*)contents, total_size);
     return total_size;
 }
 
+// Отдельный метод для отправки запроса к сервису
 std::string ScheduleService::performRequest(const std::string& url) {
     CURL* curl = curl_easy_init();
     std::string response;
@@ -67,6 +72,7 @@ std::string ScheduleService::performRequest(const std::string& url) {
     return response;
 }
 
+// Парсинг полученного json'а для дальнейшего использования на клиенте
 ScheduleData ScheduleService::parseResponse(const std::string& jsonResponse) {
     ScheduleData result;
     try {
@@ -81,6 +87,7 @@ ScheduleData ScheduleService::parseResponse(const std::string& jsonResponse) {
             content.teacher = item.value("teacher", "");
             content.cab = item.value("cab", "");
 
+            // проверка на дистанционность пары + из-за особенности API сервиса добавлена конвертация из 0 и 1 в t/f
             if (item.contains("dist")) {
                 if (item["dist"].is_boolean()) {
                     content.isDist = item["dist"].get<bool>();
@@ -93,6 +100,7 @@ ScheduleData ScheduleService::parseResponse(const std::string& jsonResponse) {
                 content.isDist = false;
             }
 
+            // to-do: переделать что если пара дистанционная - парсится ссылка на zoom-конференцию
             content.zoomLink = item.value("zoom", "");
 
             if (item.contains("time")) {
@@ -110,6 +118,7 @@ ScheduleData ScheduleService::parseResponse(const std::string& jsonResponse) {
     return result;
 }
 
+// "Продукт" строителя + отправка запроса при помощи вышеописанных отдельных функций
 ScheduleData ScheduleService::Builder::execute() {
     ScheduleService Api;
     std::string url = "https://api.ukrtb.ru/api/getSchedule?";
@@ -137,6 +146,7 @@ ScheduleData ScheduleService::Builder::execute() {
     return Api.parseResponse(response);
 }
 
+// парсинг полученных данных в дальнейшее расписание с которым будем работать
 std::string ScheduleService::scheduleDataToJson(const ScheduleData& data) {
     nlohmann::json json;
     for (const auto& item : data) {
@@ -180,6 +190,7 @@ std::string ScheduleService::handleGetSchedule(const std::map<std::string, std::
     }
 }
 
+// Метод для запуска сервера
 void ScheduleService::startServer(int port) {
     httplib::Server server;
 
@@ -193,14 +204,16 @@ void ScheduleService::startServer(int port) {
         res.set_content(result, "application/json");
     });
 
+    // Проверяем что сервер жив
     server.Get("/health", [](const httplib::Request&, httplib::Response& res) {
         res.set_content("OK", "text/plain");
     });
 
-    std::cout << "Server suck some dicks on http:/localhost:" << port << std::endl;
+    std::cout << "Server is working on http:/localhost:" << port << std::endl;
     server.listen("0.0.0.0", port);
 }
 
+// "Директор" строителя
 ScheduleService::Builder ScheduleService::Builder::create() {
     return ScheduleService::Builder();
 }
