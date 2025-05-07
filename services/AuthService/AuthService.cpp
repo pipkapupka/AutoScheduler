@@ -1,13 +1,14 @@
 #include "AuthService.h"
 #include <iostream>
 
+// 2 костыля которые находятся здесь до поры до времени, пока не реализую .env / параметры окружения
 std::string AuthService::apiKey = "ddf4e7925ac8e9ebd0229797ce21c4d8";
 
 void AuthService::setApiKey(const std::string& key) {
     apiKey = key;
 }
 
-
+// Метод для получения токена, путём отправки запроса к API сервиса и парсингом токена на выхода
 std::string AuthService::getToken(const std::string& login, const std::string& password) {
     CURL* curl = curl_easy_init();
     std::string response;
@@ -19,6 +20,7 @@ std::string AuthService::getToken(const std::string& login, const std::string& p
 
         std::string postData = postAuthData.dump();
 
+        // сервис к которому пока обращается микросервис
         std::string url = "https://api.ukrtb.ru/api/auth";
 
         struct curl_slist* headers = NULL;
@@ -33,9 +35,6 @@ std::string AuthService::getToken(const std::string& login, const std::string& p
 
         CURLcode res = curl_easy_perform(curl);
 
-        long http_code = 0;
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
 
@@ -45,6 +44,7 @@ std::string AuthService::getToken(const std::string& login, const std::string& p
 
         try {
             auto json = nlohmann::json::parse(response);
+            // если json с токеном вернулся - парсим его в строку, если нет выбрасываем исключения
             if (json.contains("token")) {
                 return json["token"].get<std::string>();
             }
@@ -53,23 +53,28 @@ std::string AuthService::getToken(const std::string& login, const std::string& p
             throw std::runtime_error("JSON parse error: " + std::string(e.what()));
         }
     }
+    // если с запросом не сложилось - выбрасываем исключение
     throw std::runtime_error("CURL init failed");
 }
 
+// Стандартная запись ответа от сервера в буфер переменного размера (если место в буфере заканчивается - выделяется буфер с размером в 2 раза больше)
 size_t AuthService::writeCallback(void* contents, size_t size, size_t memb, std::string * output){
     size_t total_size = size * memb;
     output->append((char*)contents, total_size);
     return total_size;
 }
 
+// Запускаем сервер
 void AuthService::startServer(int port){
     httplib::Server server;
 
+    // Реализация POST запроса на получения bearer-токена
     server.Post("/api/auth", [](const httplib::Request& req, httplib::Response& res){
         try {
             std::string login;
             std::string password;
 
+            // Ряд проверок чтобы все было в шоколаде
             if (!req.body.empty()){
                 auto json = nlohmann::json::parse(req.body);
                 login = json["login"];
@@ -83,7 +88,7 @@ void AuthService::startServer(int port){
                 throw std::runtime_error("Login and password required");
             }
 
-            std::cout << "Trying to auth " << login << std::endl;
+            // Записываем токен в переменную и возвращаем
             std::string token = AuthService::getToken(login, password);
 
             nlohmann::json response;
@@ -100,6 +105,7 @@ void AuthService::startServer(int port){
         }
     });
 
+    // Проверяем жив ли сервер
     server.Get("/health", [](const httplib::Request&, httplib::Response& res){
         res.set_content("All good, brother", "text/plain");
     });

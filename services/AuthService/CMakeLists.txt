@@ -19,6 +19,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 
 add_executable(AuthService main.cpp
     AuthService.h AuthService.cpp
+    Dockerfile
 )
 
 target_link_libraries(AuthService
