@@ -1,47 +1,60 @@
 #include "AuthService.h"
 #include <iostream>
 
-std::string AuthService::apiKey = "";
+std::string AuthService::apiKey = "ddf4e7925ac8e9ebd0229797ce21c4d8";
 
 void AuthService::setApiKey(const std::string& key) {
     apiKey = key;
 }
 
-std::string AuthService::getToken(const std::string& login, const std::string& password){
+#include <curl/curl.h>
+
+std::string AuthService::getToken(const std::string& login, const std::string& password) {
     CURL* curl = curl_easy_init();
     std::string response;
 
-    if (curl){
-        char* request_login = curl_easy_escape(curl, login.c_str(), login.length());
-        char* request_password = curl_easy_escape(curl, password.c_str(), password.length());
-        std::string url = std::string("https://api.ukrtb.ru/api/auth?login=") + request_login + "&password=" + request_password;
+    if (curl) {
+        nlohmann::json postAuthData;
+        postAuthData ["login"] = login;
+        postAuthData ["password"] = password;
 
-        curl_free(request_login);
-        curl_free(request_password);
-        
+        std::string postData = postAuthData.dump();
+
+        std::string url = "https://api.ukrtb.ru/api/auth";
+
+        struct curl_slist* headers = NULL;
+        headers = curl_slist_append(headers, ("apikey: " + apiKey).c_str());
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION, writeCallback);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
-        struct curl_slist* headers = nullptr;
-        headers = curl_slist_append(headers, ("apikey: " + apiKey).c_str());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
         CURLcode res = curl_easy_perform(curl);
-        if (res != CURLE_OK){
-            throw std::runtime_error("Something went wrong");
-        }
+
+        long http_code = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
 
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
+
+        if (res != CURLE_OK || http_code != 200) {
+            throw std::runtime_error("Request failed");
+        }
+
+        try {
+            auto json = nlohmann::json::parse(response);
+            if (json.contains("token")) {
+                return json["token"].get<std::string>();
+            }
+            throw std::runtime_error("Token not found in response");
+        } catch(const std::exception& e) {
+            throw std::runtime_error("JSON parse error: " + std::string(e.what()));
+        }
     }
-        
-    try {
-        auto json = nlohmann::json::parse(response);
-        return json["token"].get<std::string>();
-    } catch(const std::exception& e){
-        throw std::runtime_error("Failed to parse token" + std::string(e.what()));
-    }
+    throw std::runtime_error("CURL init failed");
 }
 
 size_t AuthService::writeCallback(void* contents, size_t size, size_t memb, std::string * output){
