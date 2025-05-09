@@ -1,13 +1,22 @@
 #include "servers/schedule_server.h"
 #include "core/schedule_parser.h"
 #include "core/schedule_service.h"
+#include <chrono>
 
 ScheduleServer::ScheduleServer(ScheduleService& service) : service_(service) {}
 
-void ScheduleServer::startServer(int port){
-    httplib::Server server;
+bool ScheduleServer::startServer(int port){
+    if (is_running_){
+        return false;
+    }
 
-    server.Get("/api/schedule", [this](const httplib::Request& req, httplib::Response& res){
+    auto server = std::make_shared<httplib::Server>();
+
+    server->Get("/health", [](const httplib::Request&, httplib::Response& res) {
+        res.set_content("OK", "text/plain");
+    });
+
+    server->Get("/api/schedule", [this](const httplib::Request& req, httplib::Response& res){
         std::map<std::string, std::string> params;
         for (const auto& [key, value] : req.params){
             params[key] = value;
@@ -23,9 +32,28 @@ void ScheduleServer::startServer(int port){
         }
     });
 
-    server.Get("/health", [](const httplib::Request&, httplib::Response& res) {
-        res.set_content("OK", "text/plain");
+    is_running_ = true;
+    server_thread_ = std::make_unique<std::thread>([server, port, this](){
+        std::cout << "Starting server on port " << port << std::endl;
+        if (!server->listen("0.0.0.0", port)) {
+            std::cerr << "Failed to start server on port " << port << std::endl;
+            is_running_ = false;
+        }
     });
 
-    server.listen("0.0.0.0", port);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    return is_running_;
+}
+
+void ScheduleServer::stopServer(){
+    if (is_running_){
+        is_running_ = false;
+        if (server_thread_ && server_thread_->joinable()) {
+            server_thread_->join();
+        }
+    }
+}
+
+bool ScheduleServer::isRunning() const {
+    return is_running_;
 }

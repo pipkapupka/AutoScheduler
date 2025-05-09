@@ -60,19 +60,14 @@ ScheduleData ScheduleBuilder::execute(){
     }
 
     std::string response;
-    if (curl){
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HttpClient::writeCallback);
-        curl_easy_setopt(curl, CURLOPT_HSTSWRITEDATA, &response);
-
-        CURLcode res = curl_easy_perform(curl);
-        if (res != CURLE_OK){
-            curl_easy_cleanup(curl);
-            throw std::runtime_error("CURL error: " + std::string(curl_easy_strerror(res)));
-        }
-
+    try {
+        response = HttpClient::performRequest(url);
+    } catch(...){
         curl_easy_cleanup(curl);
+        throw;
     }
-    // возвращаем распарсенные данные через ScheduleService
+
+    curl_easy_cleanup(curl);
+    
     return ScheduleParser::parseResponse(response);
 }
