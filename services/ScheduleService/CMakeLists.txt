@@ -10,6 +10,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_package(CURL REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
 include(FetchContent)
 FetchContent_Declare(
     httplib
@@ -18,48 +22,33 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(httplib)
 
-find_package(CURL REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set(SOURCES
-    src/main.cpp
-    src/core.cpp
-    src/http_client.cpp
-    src/schedule_builder.cpp
-    src/schedule_parser.cpp
-    src/schedule_server.cpp
-    src/schedule_service.cpp
+# компоненты для ядра
+add_library(core
+    src/core/schedule_service.cpp
+    src/core/schedule_parser.cpp
+    src/core/http_client.cpp
 )
+target_include_directories(core PUBLIC ${INCLUDE_DIR})
+target_link_libraries(core PUBLIC ${CURL_LIBRARIES} nlohmann_json::nlohmann_json)
 
-set(HEADERS
-    include/core.h
-    include/http_client.h
-    include/schedule_builder.h
-    include/schedule_parser.h
-    include/schedule_server.h
-    include/schedule_service.h
+# компоненты для билдера
+add_library(builders
+    src/builders/schedule_builder.cpp
 )
+target_include_directories(builders PUBLIC ${INCLUDE_DIR})
+target_link_libraries(builders PUBLIC core)
 
-add_executable(ScheduleService ${SOURCES} ${HEADERS})
-
-target_include_directories(ScheduleService
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CURL_INCLUDE_DIRS}
+# компоненты для сервера
+add_library(servers
+    src/servers/schedule_server.cpp
 )
+target_include_directories(servers PUBLIC ${INCLUDE_DIR})
+target_link_libraries(servers PUBLIC builders httplib)
 
-target_link_libraries(ScheduleService
-PRIVATE
-    CURL::libcurl
-    ZLIB::ZLIB
-    nlohmann_json::nlohmann_json
-    httplib
-)
+# главный исполняемый файл
+add_executable(ScheduleService src/main.cpp)
+target_link_libraries(ScheduleService PRIVATE servers core builders ${CURL_LIBRARIES} httplib)
 
-include(GNUInstallDirs)
 
-install(TARGETS ScheduleService
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)

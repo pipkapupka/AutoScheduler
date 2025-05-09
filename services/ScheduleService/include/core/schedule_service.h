@@ -2,7 +2,6 @@
 #include <map>
 #include <string>
 #include <nlohmann/json.hpp>
-#include <builders/schedule_builder.h>
 
 struct LessonTime {
     std::string start;

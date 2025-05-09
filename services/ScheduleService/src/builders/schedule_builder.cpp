@@ -1,6 +1,6 @@
 #include "builders/schedule_builder.h"
-#include "core/schedule_service.h"
 #include "core/http_client.h"
+#include "core/schedule_service.h"
 #include "core/schedule_parser.h"
 
 // конструктор на основе Dependency Injection

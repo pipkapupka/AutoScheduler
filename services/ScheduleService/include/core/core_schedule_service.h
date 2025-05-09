@@ -6,7 +6,6 @@ class CoreScheduleService : public ScheduleService {
 public:
     ScheduleData getSchedule(const std::map<std::string, std::string>& params) override {
         ScheduleBuilder builder(*this);
-
         for (const auto& [key, value] : params){
             if (key == "group") builder.setGroup(value);
             else if (key == "date") builder.setDate(value);
@@ -14,7 +13,6 @@ public:
             else if (key == "cab") builder.setCab(value);
             else if (key == "zoom") builder.zoomLink(value == "true");
         }
-        
         return builder.execute();
     }
 };

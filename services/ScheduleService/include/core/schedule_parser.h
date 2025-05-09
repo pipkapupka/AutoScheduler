@@ -1,5 +1,6 @@
+#pragma once
 #include <nlohmann/json.hpp>
-#include "include/core/schedule_service.h"
+#include "core/schedule_service.h"
 
 class ScheduleParser {
 public:

@@ -1,5 +1,6 @@
 #include "servers/schedule_server.h"
 #include "core/schedule_parser.h"
+#include "core/schedule_service.h"
 
 ScheduleServer::ScheduleServer(ScheduleService& service) : service_(service) {}
 

@@ -1,7 +1,6 @@
-#include "http_client.h"
+#include "core/http_client.h"
 #include <iostream>
 #include "core/schedule_service.h"
-#pragma once
 
 size_t HttpClient::writeCallback(void* contents, size_t size, size_t memb, std::string* output){
     size_t total_size = memb * size;

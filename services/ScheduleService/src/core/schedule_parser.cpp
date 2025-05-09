@@ -1,4 +1,4 @@
-#include "include/core/schedule_parser.h"
+#include "core/schedule_parser.h"
 #include <iostream>
 
 ScheduleData ScheduleParser::parseResponse(const std::string& jsonResponse){

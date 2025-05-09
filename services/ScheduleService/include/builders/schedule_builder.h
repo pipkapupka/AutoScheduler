@@ -1,5 +1,11 @@
-#include "core/schedule_service.h"
 #pragma once 
+#include <map>
+#include <string>
+#include <vector>
+
+class ScheduleService;
+struct ScheduleItem;
+using ScheduleData = std::vector<ScheduleItem>;
 
 class ScheduleBuilder {
 public:
@@ -11,7 +17,7 @@ public:
     ScheduleBuilder& setTeacher(const std::string& teacher);
     ScheduleBuilder& setCab(const std::string& cab);
     ScheduleBuilder& zoomLink(bool isDist = true);
-    
+
     ScheduleData execute();
 private:
     ScheduleService& apiService_; // ссылка на сервис
