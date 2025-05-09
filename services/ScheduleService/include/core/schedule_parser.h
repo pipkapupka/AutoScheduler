@@ -1,0 +1,8 @@
+#include <nlohmann/json.hpp>
+#include "include/core/schedule_service.h"
+
+class ScheduleParser {
+public:
+    static ScheduleData parseResponse(const std::string& jsonResponse);
+    static std::string scheduleDataToJson(const ScheduleData& data); 
+};
