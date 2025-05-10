@@ -2,12 +2,14 @@
 #include <iostream>
 #include "core/schedule_service.h"
 
+// метод для записи ответа от сервера в буфер переменного размера
 size_t HttpClient::writeCallback(void* contents, size_t size, size_t memb, std::string* output){
     size_t total_size = memb * size;
     output -> append((char*)contents, total_size);
     return total_size;
 }
 
+// выполнение запроса
 std::string HttpClient::performRequest(const std::string& url){
     CURL* curl = curl_easy_init();
     std::string response;

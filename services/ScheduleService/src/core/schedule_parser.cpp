@@ -1,12 +1,14 @@
 #include "core/schedule_parser.h"
 #include <iostream>
 
+// парсим ответ от сервера
 ScheduleData ScheduleParser::parseResponse(const std::string& jsonResponse){
     ScheduleData result;
     try {
         auto jsonFile = nlohmann::json::parse(jsonResponse);
         for (const auto& item : jsonFile){
-            ScheduleItem content;
+            ScheduleItem content; // используем описанную ранее структуру с интересующими нас полями
+
             content.num = item.value("num", 0);
             content.typeLesson = item.value("typeLesson", "");
             content.dateLesson = item.value("date", "");
@@ -15,6 +17,8 @@ ScheduleData ScheduleParser::parseResponse(const std::string& jsonResponse){
             content.teacher = item.value("teacher", "");
             content.cab = item.value("cab", "");
 
+            // временное решение, пока зум есть в каждом json, нужно сделать чтобы он 
+            // парсился только когда isDist == true
             if (item.contains("dist")){
                 if (item["dist"].is_boolean()){
                     content.isDist = item["dist"].get<bool>();
@@ -41,6 +45,7 @@ ScheduleData ScheduleParser::parseResponse(const std::string& jsonResponse){
     return result;
 }
 
+// метод для конвертации данных в json для передачи клиенту 
 std::string ScheduleParser::scheduleDataToJson(const ScheduleData& data){
     nlohmann::json json;
     for (const auto& item : data){
@@ -59,5 +64,6 @@ std::string ScheduleParser::scheduleDataToJson(const ScheduleData& data){
         };
         json.push_back(itemJson);
     }
+    // сереализация объекта в строку
     return json.dump();
 }
