@@ -1,5 +1,19 @@
 cmake_minimum_required(VERSION 3.16)
 
+project(AuthService
+    LANGUAGES CXX
+    VERSION 1.0
+    DESCRIPTION "Microservice for auth"
+)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+find_package(CURL REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
 include(FetchContent)
 FetchContent_Declare(
     httplib
@@ -8,30 +22,24 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(httplib)
 
-project(AuthService LANGUAGES CXX)
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-find_package(CURL REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
-
-add_executable(AuthService main.cpp
-    AuthService.h AuthService.cpp
-    Dockerfile
+# компоненты для ядра
+add_library(core
+    src/core/auth_parser.cpp
 )
+target_include_directories(core PUBLIC ${INCLUDE_DIR})
+target_link_libraries(core PUBLIC ${CURL_LIBRARIES} nlohmann_json::nlohmann_json)
 
-target_link_libraries(AuthService
-PRIVATE
-    CURL::libcurl
-    ZLIB::ZLIB
-    nlohmann_json::nlohmann_json
-    httplib
+# компоненты для сервера
+add_library(server
+    src/server/auth_server.cpp
 )
+target_include_directories(server PUBLIC ${INCLUDE_DIR})
+target_link_libraries(server PUBLIC httplib)
 
-include(GNUInstallDirs)
-install(TARGETS AuthService
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+# главный исполняемый файл
+add_executable(AuthService src/main.cpp)
+target_link_libraries(AuthService PRIVATE server core ${CURL_LIBRARIES} httplib)
+
+

@@ -24,7 +24,7 @@ ScheduleData ScheduleParser::parseResponse(const std::string& jsonResponse){
                     content.isDist = item["dist"].get<bool>();
                 } else {
                     content.isDist = item["dist"].get<int>() != 0;
-                }
+                }   
             } else {
                 content.isDist = false;
             }

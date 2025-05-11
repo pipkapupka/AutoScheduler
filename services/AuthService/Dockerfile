@@ -33,6 +33,5 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY --from=builder /app/build/AuthService .
 
-EXPOSE 8080
-
+EXPOSE 8081
 CMD ["./AuthService"]
