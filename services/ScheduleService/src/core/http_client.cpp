@@ -18,6 +18,7 @@ std::string HttpClient::performRequest(const std::string& url){
         throw std::runtime_error("Failed to initialize cURL");
     }
 
+    // дополнительная проверка параметров запроса
     std::cout << "Making request to: " << url << std::endl;
     std::cout << "Using API key: " << ScheduleService::apiKey << std::endl;
     

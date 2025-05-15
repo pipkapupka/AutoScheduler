@@ -12,6 +12,7 @@ public:
     void stopServer();
     bool isRunning() const;
 private:
+    // многопоточные приколы
     ScheduleService& service_;
     std::atomic<bool> is_running_{false};
     std::unique_ptr<std::thread> server_thread_;
