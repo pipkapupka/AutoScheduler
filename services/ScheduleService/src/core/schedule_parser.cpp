@@ -12,9 +12,7 @@ ScheduleData ScheduleParser::parseResponse(const std::string& jsonResponse){
 
     try {
         auto jsonFile = nlohmann::json::parse(jsonResponse);
-        if (jsonFile.is_array()){
             for (const auto& item : jsonFile){
-                if (item.is_object()){
                     ScheduleItem content; // используем описанную ранее структуру с интересующими нас полями
                     
                     content.num = item.value("num", 0);
@@ -39,29 +37,18 @@ ScheduleData ScheduleParser::parseResponse(const std::string& jsonResponse){
 
                     content.zoomLink = content.isDist ? item.value("zoom", "") : "";
 
-                    if (item.contains("time") && item["time"].is_array() && item["time"].size() >= 2) {
+                    if (item.contains("time")) {
                         content.time = {
-                            item["time"][0].get<std::string>(),
-                            item["time"][1].get<std::string>()
+                            item["time"].value("start", ""),
+                            item["time"].value("end", "")
                         };
-                    } else {
-                        content.time = {"", ""};
-                        std::cerr << "Warning: Invalid time format" << std::endl;
                     }
-                    result.push_back(content);
-                } else {
-                    std::cerr << "Expected JSON object in array" << std::endl;
-                }
+                result.push_back(content);
             }
-        } else {
-            std::cerr << "Expected JSON array at top level" << std::endl;
-        }
     } catch (const std::exception& e){
         std::cerr << "JSON parse error" << e.what() << std::endl;
         std::cerr << "Response content: " << jsonResponse << std::endl;
-    } catch (const std::exception& e){
-        std::cerr << "Error" << e.what() << std::endl;
-    }
+    } 
     return result;
 }
 
@@ -78,10 +65,7 @@ std::string ScheduleParser::scheduleDataToJson(const ScheduleData& data){
         itemJson["cab"] = item.cab;
         itemJson["zoomLink"] = item.zoomLink;
         itemJson["isDist"] = item.isDist;
-        itemJson["time"] = {
-            {"start", item.time.start},
-            {"end", item.time.end}
-        };
+        itemJson["time"] = nlohmann::json::array({item.time.start, item.time.end});
         json.push_back(itemJson);
     }
     // сереализация объекта в строку
