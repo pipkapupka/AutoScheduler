@@ -21,7 +21,11 @@ ScheduleData ScheduleParser::parseResponse(const std::string& jsonResponse){
                     content.group = item.value("group", "");
                     content.lesson = item.value("lesson", "");
                     content.teacher = item.value("teacher", "");
-                    content.cab = item.value("cab", "");
+                    if (item["cab"].is_null()) {
+                        content.cab = ""; 
+                    } else {
+                        content.cab = item["cab"].get<std::string>();
+                    }   
 
                     // временное решение, пока зум есть в каждом json, нужно сделать чтобы он 
                     // парсился только когда isDist == true
